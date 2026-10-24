@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🖥️ Cybercafe Simulator v3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0e17;--bg2:#121826;--bg3:#1a2236;--bg4:#232d44;
+--cyan:#00e5ff;--green:#00ff88;--pink:#ff2d92;--purple:#b14aed;
+--yellow:#ffd60a;--orange:#ff6b35;--red:#ff4757;
+--txt:#e8edf5;--dim:#8892b0;--br:#2a3550;--r:8px;
+--mono:'Courier New',monospace;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent}
+.hidden{display:none!important}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--br);border-radius:3px}
+
+/* Shop banner — custom name + selected badges */
+#shop-banner{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+#shop-banner-name{font-size:16px;font-weight:900;color:var(--cyan);letter-spacing:1px}
+#shop-banner-badges{display:flex;gap:4px}
+.shop-badge-selected{font-size:18px;background:var(--bg4);border:1px solid var(--yellow);border-radius:6px;padding:2px 6px;animation:badgeShine 2s infinite}
+@keyframes badgeShine{0%,100%{box-shadow:0 0 4px rgba(255,214,10,0.2)}50%{box-shadow:0 0 12px rgba(255,214,10,0.5)}}
+
+/* Badge selection in achievements tab */
+.badge-select-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px 0}
+.badge-sel-item{text-align:center;padding:6px;border-radius:6px;cursor:pointer;transition:all .15s;border:2px solid var(--br);background:var(--bg3)}
+.badge-sel-item:hover{border-color:var(--cyan)}
+.badge-sel-item.selected{border-color:var(--yellow);box-shadow:0 0 8px rgba(255,214,10,0.3)}
+.badge-sel-item.locked{opacity:.3;cursor:not-allowed}
+.badge-sel-icon{font-size:20px}
+.badge-sel-name{font-size:8px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Shop name editor */
+#shop-name-edit{background:var(--bg3);border:1px solid var(--cyan);color:var(--cyan);font-size:13px;padding:4px 8px;border-radius:4px;width:200px;font-family:inherit}
+body.day-theme{--shop-bg:linear-gradient(180deg,#1a2236,#0a0e17)}
+body.night-theme{--shop-bg:linear-gradient(180deg,#0a0a14,#050810)}
+body.dusk-theme{--shop-bg:linear-gradient(180deg,#1a1020,#0a0e17)}
+#left-panel{transition:background 2s ease}
+
+/* Shop visual — mosaic tile background (light grey/white subtle) */
+#shop-visual{
+background:linear-gradient(180deg,#0d1320 0%,#0a0e17 100%);
+background-image:
+linear-gradient(45deg,rgba(200,200,210,0.04) 25%,transparent 25%),
+linear-gradient(-45deg,rgba(200,200,210,0.04) 25%,transparent 25%),
+linear-gradient(45deg,transparent 75%,rgba(200,200,210,0.04) 75%),
+linear-gradient(-45deg,transparent 75%,rgba(200,200,210,0.04) 75%);
+background-size:20px 20px;
+background-position:0 0,0 10px,10px -10px,-10px 0;
+}
+#shop-floor{
+background:repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(0,229,255,0.03) 38px,rgba(0,229,255,0.03) 40px);
+}
+
+/* MAIN MENU */
+#menu-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0e17,#1a1a2e,#16213e);z-index:1000}
+.menu-logo{font-size:48px;margin-bottom:8px}
+.menu-title{font-size:36px;font-weight:900;background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;margin-bottom:4px}
+.menu-sub{font-size:13px;color:var(--dim);margin-bottom:24px}
+.menu-id{background:var(--bg3);border:1px solid var(--br);padding:8px 20px;border-radius:var(--r);font-family:var(--mono);font-size:14px;color:var(--cyan);margin-bottom:10px;letter-spacing:1px}
+.menu-id b{color:var(--dim);font-weight:400}
+.menu-btn{width:280px;padding:16px;border-radius:var(--r);font-size:16px;font-weight:700;margin:5px;transition:all .15s}
+.menu-btn.primary{background:linear-gradient(135deg,var(--green),var(--cyan));color:var(--bg)}
+.menu-btn.secondary{background:var(--bg3);color:var(--cyan);border:1px solid var(--cyan)}
+.menu-btn:hover{transform:scale(1.03)}
+.menu-btn:active{transform:scale(.97)}
+.menu-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.menu-footer{position:absolute;bottom:12px;font-size:11px;color:var(--dim)}
+.menu-lb{background:var(--bg3);border:1px solid var(--br);border-radius:var(--r);padding:10px 16px;margin-bottom:16px;max-width:300px;width:100%}
+.menu-lb h4{font-size:12px;color:var(--yellow);margin-bottom:6px}
+.menu-lb-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--dim)}
+.menu-lb-row b{color:var(--cyan)}
+
+/* GAME LAYOUT */
+#game-screen{display:flex;height:100vh;overflow:hidden}
+#left-panel{flex:1.2;display:flex;flex-direction:column;border-right:2px solid var(--br);background:var(--bg);position:relative;min-width:0}
+#shop-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--br);z-index:5}
+#shop-name{font-weight:800;font-size:14px;color:var(--cyan)}
+#shop-day{font-size:12px;color:var(--dim)}
+#shop-time{font-size:12px;color:var(--yellow);font-family:var(--mono)}
+#shop-deco{font-size:18px;margin-left:6px}
+
+/* Shop visual */
+#shop-visual{flex:1;display:flex;flex-direction:column;padding:10px;overflow:hidden;position:relative}
+#shop-floor{flex:1;display:flex;gap:8px;overflow:hidden;position:relative}
+
+/* Day/night overlay */
+#day-night-overlay{position:absolute;inset:0;pointer-events:none;z-index:1;transition:background 2s ease}
+
+/* PC grid */
+#pc-area{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:6px;align-content:start;padding:4px;position:relative;z-index:2}
+.pc-slot{background:var(--bg3);border:2px solid var(--br);border-radius:var(--r);padding:6px;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;min-height:92px}
+.pc-slot:hover{border-color:var(--cyan)}
+.pc-slot.empty{opacity:.35;border-style:dashed}
+.pc-slot.occupied{border-color:var(--green);box-shadow:0 0 8px rgba(0,255,136,.15)}
+.pc-slot.waiting{border-color:var(--yellow);animation:pulseY 1.2s infinite}
+.pc-slot.angry{border-color:var(--red);animation:shk .3s infinite}
+.pc-slot.upgrading{animation:upgPulse .6s ease}
+@keyframes pulseY{0%,100%{box-shadow:0 0 6px rgba(255,214,10,.2)}50%{box-shadow:0 0 16px rgba(255,214,10,.5)}}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+@keyframes upgPulse{0%{transform:scale(1)}50%{transform:scale(1.15);box-shadow:0 0 20px var(--purple)}100%{transform:scale(1)}}
+.pc-num{font-size:10px;color:var(--dim);font-weight:700}
+.pc-lv{display:inline-block;background:var(--purple);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;margin:1px 0}
+.pc-mon{font-size:24px;margin:2px 0}
+.pc-gn{font-size:8px;color:var(--cyan);font-family:var(--mono);height:18px;overflow:hidden}
+.pc-st{font-size:9px;font-weight:700;margin-top:1px}
+.pc-st.free{color:var(--dim)}.pc-st.playing{color:var(--green)}.pc-st.waiting{color:var(--yellow)}
+.pc-tb{height:3px;background:var(--br);border-radius:2px;margin-top:3px;overflow:hidden}
+.pc-tf{height:100%;background:var(--green);transition:width .3s linear}
+.pc-inc{font-size:8px;color:var(--green);font-weight:700}
+.pc-cust-type{position:absolute;top:2px;right:2px;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700}
+.pc-cust-type.vip{background:var(--yellow);color:#000}
+.pc-cust-type.student{background:var(--cyan);color:#000}
+.pc-cust-type.pro{background:var(--pink);color:#fff}
+
+/* Playing dialog inside PC slot */
+.pc-dialog{background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:4px;padding:2px 4px;font-size:8px;color:var(--cyan);margin:2px 0;height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;animation:dlgFade .3s ease}
+@keyframes dlgFade{from{opacity:0}to{opacity:1}}
+
+/* Customer walking animation */
+.cust-walk{position:absolute;bottom:70px;left:-30px;font-size:24px;z-index:10;animation:walkIn .8s ease forwards}
+@keyframes walkIn{from{left:-30px;opacity:0}to{left:50%;opacity:1;transform:translateX(-50%)}}
+
+/* Counter / Queue */
+#counter-area{background:var(--bg2);border-top:2px solid var(--br);padding:8px 10px;min-height:72px;display:flex;align-items:center;gap:8px;z-index:5}
+#counter-label{font-size:11px;font-weight:800;color:var(--dim);white-space:nowrap;display:flex;align-items:center;gap:4px}
+#counter-emoji{font-size:20px}
+#queue-list{display:flex;gap:5px;overflow-x:auto;flex:1}
+.q-cust{background:var(--bg3);border:1px solid var(--br);border-radius:6px;padding:4px 8px;font-size:10px;white-space:nowrap;display:flex;align-items:center;gap:3px;animation:slIn .3s}
+.q-cust .ct-badge{font-size:8px;padding:1px 3px;border-radius:3px;margin-left:2px}
+.q-cust .ct-badge.vip{background:var(--yellow);color:#000}
+.q-cust .ct-badge.student{background:var(--cyan);color:#000}
+.q-cust .ct-badge.pro{background:var(--pink);color:#fff}
+@keyframes slIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+
+/* Serve panel */
+#serve-panel{position:absolute;bottom:0;left:0;right:0;background:var(--bg2);border-top:3px solid var(--yellow);padding:14px;z-index:50;box-shadow:0 -4px 20px rgba(0,0,0,.4)}
+#sp-info{text-align:center;margin-bottom:8px}
+.sp-emoji{font-size:32px}
+.sp-text{font-size:14px;font-weight:700;margin:2px 0}
+.sp-req{font-size:17px;font-weight:900;color:var(--yellow)}
+.sp-ctype{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;margin-top:2px;font-weight:700}
+.sp-ctype.vip{background:var(--yellow);color:#000}
+.sp-ctype.student{background:var(--cyan);color:#000}
+.sp-ctype.pro{background:var(--pink);color:#fff}
+.sp-ctype.normal{background:var(--dim);color:#000}
+#sp-hours{display:flex;align-items:center;justify-content:center;gap:16px;margin:10px 0}
+#sp-minus,#sp-plus{background:var(--bg3);border:2px solid var(--br);color:#fff;font-size:24px;width:56px;height:56px;border-radius:50%;font-weight:900;transition:all .1s}
+#sp-minus:hover,#sp-plus:hover{border-color:var(--cyan);transform:scale(1.1)}
+#sp-minus:active,#sp-plus:active{transform:scale(.9)}
+#sp-show{font-size:40px;font-weight:900;color:var(--cyan);min-width:80px;text-align:center;font-family:var(--mono)}
+#sp-patience{height:6px;background:var(--br);border-radius:3px;overflow:hidden;margin:6px 0}
+#sp-pfill{height:100%;background:var(--green);transition:width .1s linear;width:100%}
+#sp-confirm{width:100%;background:linear-gradient(135deg,var(--green),var(--cyan));color:var(--bg);font-size:16px;font-weight:900;padding:14px;border-radius:var(--r)}
+#sp-confirm:hover{transform:scale(1.01)}
+
+/* RIGHT PANEL */
+#right-panel{flex:1;display:flex;flex-direction:column;background:var(--bg2);min-width:0;max-width:440px}
+#hud-bar{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;background:var(--bg3);border-bottom:1px solid var(--br)}
+.hud-item{display:flex;align-items:center;gap:3px;background:var(--bg4);padding:6px 12px;border-radius:6px;font-weight:800;font-size:13px;border:1px solid var(--br)}
+.hud-item .hi{font-size:15px}
+#hud-money{color:var(--green)}
+
+/* Day bar */
+#day-bar{background:var(--bg3);padding:4px 10px;border-bottom:1px solid var(--br)}
+#day-bar-fill{height:4px;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:2px;width:0%;transition:width .5s linear;margin-bottom:3px}
+#day-bar-txt{font-size:10px;color:var(--dim)}
+
+/* Tabs */
+#tab-bar{display:flex;gap:1px;padding:0 8px;background:var(--bg3);border-bottom:1px solid var(--br);overflow-x:auto}
+.tab-btn{flex:1;min-width:55px;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-size:12px;font-weight:700;padding:10px 2px;white-space:nowrap;transition:all .15s}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tab-btn:hover{color:#fff}
+.tab-btn.has-new{animation:badgeGlow 1.5s infinite}
+@keyframes badgeGlow{0%,100%{color:var(--dim);text-shadow:none}50%{color:var(--yellow);text-shadow:0 0 8px var(--yellow),0 0 4px var(--yellow)}}
+#tab-content{flex:1;overflow-y:auto;padding:8px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* Upgrade cards */
+.ucard{background:var(--bg3);border:1px solid var(--br);border-radius:var(--r);padding:10px;margin-bottom:6px;transition:all .15s}
+.ucard:hover{border-color:var(--cyan)}
+.ucard.locked{opacity:.45}
+.uc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.uc-name{font-weight:800;font-size:13px}
+.uc-lv{font-size:11px;color:var(--purple);font-weight:700}
+.uc-desc{font-size:10px;color:var(--dim);margin-bottom:6px;line-height:1.3}
+.uc-stats{display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+.uc-stat{font-size:9px;background:var(--bg);padding:2px 6px;border-radius:3px;color:var(--dim)}
+.uc-stat b{color:var(--cyan)}
+.uc-btn{width:100%;background:var(--green);color:var(--bg);font-weight:800;font-size:13px;padding:10px;border-radius:6px;transition:all .1s}
+.uc-btn:hover{transform:scale(1.01)}
+.uc-btn:disabled{background:var(--br);color:var(--dim);cursor:not-allowed}
+.uc-btn.cant{background:var(--red);opacity:.4}
+.uc-warn{font-size:9px;color:var(--yellow);margin-top:3px}
+
+/* PC upgrade items */
+.pcu{background:var(--bg3);border:1px solid var(--br);border-radius:var(--r);padding:8px;margin-bottom:6px}
+.pcu-h{display:flex;justify-content:space-between;align-items:center}
+.pcu-n{font-weight:800;font-size:12px}
+.pcu-g{font-size:9px;color:var(--cyan);font-family:var(--mono);margin:3px 0}
+.pcu-i{font-size:10px;color:var(--green);font-weight:700}
+.pcu-pb{height:5px;background:var(--br);border-radius:3px;margin:4px 0;overflow:hidden}
+.pcu-pf{height:100%;background:var(--purple);transition:width .3s}
+.pcu-ng{font-size:9px;color:var(--cyan);margin-top:3px}
+
+/* Game list */
+.gli{display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--br);font-size:11px}
+.gli.unlocked{color:var(--green)}.gli.locked{color:var(--dim)}
+.glb{background:var(--purple);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;min-width:24px;text-align:center}
+.gli.aaa .glb{background:var(--yellow);color:#000}
+.gli.aaa{font-weight:700}
+
+/* Achievements */
+.achi{display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;margin-bottom:5px;background:var(--bg3);border:1px solid var(--br)}
+.achi.done{border-color:var(--green)}.achi.locked{opacity:.4}
+.achi-i{font-size:20px}.achi-info{flex:1}.achi-t{font-weight:800;font-size:12px}.achi-d{font-size:10px;color:var(--dim)}
+
+/* Stats */
+.sr{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--br);font-size:12px}
+.sr b{color:var(--cyan)}
+
+/* Leaderboard */
+.lb-row{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--br);font-size:12px}
+.lb-rank{font-weight:900;font-size:14px;width:24px}
+.lb-rank.gold{color:var(--yellow)}.lb-rank.silver{color:#c0c0c0}.lb-rank.bronze{color:#cd7f32}
+.lb-name{color:var(--cyan);font-weight:700}
+.lb-score{color:var(--green);font-weight:800}
+
+/* Bottom bar */
+#bottom-bar{display:flex;gap:4px;padding:6px 8px;background:var(--bg3);border-top:1px solid var(--br)}
+#bottom-bar button{flex:1;background:var(--bg4);border:1px solid var(--br);color:var(--txt);font-weight:700;font-size:12px;padding:8px;border-radius:6px;transition:all .1s}
+#bottom-bar button:hover{border-color:var(--cyan)}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px}
+.modal-content{background:var(--bg2);border:2px solid var(--cyan);border-radius:12px;padding:20px;max-width:400px;width:100%;text-align:center}
+.modal-content h2{margin-bottom:10px;font-size:20px}
+.modal-content p{font-size:13px;color:var(--dim);margin-bottom:12px;line-height:1.4}
+.btn-conf{background:var(--green);color:var(--bg);padding:12px 24px;border-radius:var(--r);font-weight:800;font-size:14px}
+.btn-canc{background:var(--bg4);color:var(--txt);border:1px solid var(--br);padding:12px 24px;border-radius:var(--r);font-weight:800;font-size:14px}
+
+/* Event banner */
+#event-banner{position:fixed;top:50px;left:50%;transform:translateX(-50%);background:var(--purple);color:#fff;padding:8px 20px;border-radius:0 0 10px 10px;font-weight:800;font-size:13px;z-index:300;text-align:center;animation:bSl .5s}
+@keyframes bSl{from{transform:translate(-50%,-100%)}to{transform:translate(-50%,0)}}
+
+/* Achievement popup */
+#ach-popup{position:fixed;top:70px;right:10px;background:var(--bg3);border:2px solid var(--green);border-radius:10px;padding:10px 14px;z-index:400;animation:aSl .5s;max-width:260px}
+@keyframes aSl{from{transform:translateX(120%)}to{transform:translateX(0)}}
+.ap-inner{display:flex;align-items:center;gap:8px}
+.ap-inner span{font-size:24px}
+#ap-title{font-weight:800;font-size:12px;color:var(--green)}
+#ap-desc{font-size:10px;color:var(--dim)}
+
+/* Floating money */
+.fm{position:absolute;font-weight:900;font-size:16px;pointer-events:none;animation:fU 1.2s forwards;z-index:50}
+@keyframes fU{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-40px) scale(1.3)}}
+.fm.gain{color:var(--green)}.fm.loss{color:var(--red)}
+
+/* Upgrade effect */
+.upg-effect{position:absolute;inset:0;pointer-events:none;z-index:60;animation:upgFlash .6s ease forwards}
+@keyframes upgFlash{0%{opacity:0}30%{opacity:1;box-shadow:inset 0 0 30px var(--purple)}100%{opacity:0}}
+
+/* Notification */
+.notif{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:8px;font-weight:800;font-size:13px;z-index:600;animation:fU 2s forwards;white-space:nowrap;max-width:90%}
+.notif.green{background:var(--green);color:var(--bg)}
+.notif.red{background:var(--red);color:#fff}
+.notif.orange{background:var(--orange);color:var(--bg)}
+.notif.dim{background:var(--dim);color:var(--bg)}
+
+/* Tutorial */
+#tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:700;display:flex;align-items:center;justify-content:center;padding:20px}
+.tut-box{background:var(--bg2);border:2px solid var(--cyan);border-radius:12px;padding:24px;max-width:380px;text-align:center}
+.tut-box h2{font-size:20px;margin-bottom:10px;color:var(--cyan)}
+.tut-box p{font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:14px}
+.tut-box .tut-step{font-size:11px;color:var(--purple);margin-bottom:8px}
+.tut-btn{background:linear-gradient(135deg,var(--green),var(--cyan));color:var(--bg);padding:12px 24px;border-radius:var(--r);font-weight:800;font-size:14px;margin:4px}
+
+/* Portrait warning */
+#portrait-warn{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;text-align:center;padding:20px}
+#portrait-warn .pw-icon{font-size:48px;margin-bottom:12px}
+#portrait-warn .pw-text{font-size:16px;color:var(--dim);line-height:1.5}
+@media(max-width:820px) and (orientation:portrait){
+#portrait-warn{display:flex}
+#game-screen{display:none}
+}
+/* Mobile bigger buttons */
+@media(max-width:600px){
+.uc-btn,.btn-conf{padding:12px;font-size:14px}
+#sp-minus,#sp-plus{width:64px;height:64px;font-size:28px}
+#sp-confirm{padding:16px;font-size:18px}
+.menu-btn{width:240px;padding:16px;font-size:15px}
+}
+</style>
+</head>
+<body>
+
+<div id="portrait-warn"><div class="pw-icon">📱↻</div><div class="pw-text">Putar peranti ke <b>landscape</b><br>untuk main game ni 🖥️</div></div>
+
+<!-- MAIN MENU -->
+<div id="menu-screen">
+  <div class="menu-logo">🖥️</div>
+  <div class="menu-title">CYBERCAFE SIMULATOR</div>
+  <div class="menu-sub">Dari Kedai Buruk Jadi Esports Arena</div>
+  <div class="menu-id">🆔 <b>ID:</b> <span id="menu-id-display">CCS-XXXXX</span></div>
+  <div class="menu-lb" id="menu-leaderboard"><h4>🏆 Leaderboard Tempatan</h4><div id="lb-content"></div></div>
+  <button class="menu-btn primary" id="btn-new" onclick="startNewGame()">🆕 MULA BERMAIN</button>
+  <button class="menu-btn secondary" id="btn-continue" onclick="continueGame()" disabled>▶️ SAMBUNG BERMAIN</button>
+  <div class="menu-footer">v3.0 — Sound, Animasi, Day/Night, VIP, Tutorial</div>
+</div>
+
+<!-- TUTORIAL -->
+<div id="tutorial-overlay" class="hidden">
+  <div class="tut-box">
+    <h2 id="tut-title">👋 Selamat Datang!</h2>
+    <p id="tut-text"></p>
+    <div id="tut-steps"></div>
+    <button class="tut-btn" onclick="nextTutStep()" id="tut-next-btn">Mula! 🚀</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" class="hidden">
+  <div id="left-panel">
+    <div id="shop-header">
+      <div><span id="shop-deco">🏚️</span> <span id="shop-name">Kedai Buruk</span> <span id="shop-level-badge" style="background:var(--purple);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:4px">Lv 1</span> <span id="shop-day" style="margin-left:8px">Hari 1</span></div>
+      <div id="shop-time">08:00 AM</div>
+    </div>
+    <div id="shop-banner" style="display:none;padding:4px 12px;background:var(--bg3);border-bottom:1px solid var(--br);text-align:center"></div>
+    <div id="shop-visual">
+      <div id="day-night-overlay"></div>
+      <div id="shop-floor"><div id="pc-area"></div></div>
+    </div>
+    <div id="counter-area">
+      <div id="counter-label"><span id="counter-emoji">🧑‍💼</span> KAUNTER</div>
+      <div id="queue-list"></div>
+      <div id="counter-person" style="font-size:28px;margin-left:auto;padding-left:8px;flex-shrink:0">🧍</div>
+    </div>
+    <div id="serve-panel" class="hidden">
+      <div id="sp-info"></div>
+      <div id="sp-hours">
+        <button id="sp-minus" onclick="adjH(-1)">➖</button>
+        <div id="sp-show">0</div>
+        <button id="sp-plus" onclick="adjH(1)">➕</button>
+      </div>
+      <div id="sp-patience"><div id="sp-pfill"></div></div>
+      <button id="sp-confirm" onclick="confirmServe()">▶️ MULA MAIN!</button>
+    </div>
+  </div>
+  <div id="right-panel">
+    <div id="hud-bar">
+      <div class="hud-item" id="hud-money"><span class="hi">💰</span><span id="money">RM 100</span></div>
+      <div class="hud-item"><span class="hi">⭐</span><span id="rep">50</span></div>
+      <div class="hud-item"><span class="hi">🎯</span><span id="day-goal">0/100</span></div>
+      <div class="hud-item"><span class="hi">🔥</span><span id="combo">x1</span></div>
+    </div>
+    <div id="day-bar"><div id="day-bar-fill"></div><div id="day-bar-txt">Untung: RM 0 | Sewa: RM 20</div></div>
+    <div id="tab-bar">
+      <button class="tab-btn active" data-tab="pc" onclick="switchTab('pc')">🖥️ PC</button>
+      <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')">🏪 Kedai</button>
+      <button class="tab-btn" data-tab="worker" onclick="switchTab('worker')">🤖 Pekerja</button>
+      <button class="tab-btn" data-tab="games" onclick="switchTab('games')">🎮 Games</button>
+      <button class="tab-btn" data-tab="ach" onclick="switchTab('ach')">🏆</button>
+      <button class="tab-btn" data-tab="lb" onclick="switchTab('lb')">📋</button>
+      <button class="tab-btn" data-tab="redeem" onclick="switchTab('redeem')">🎟️</button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊</button>
+    </div>
+    <div id="tab-content">
+      <div id="tab-pc" class="tab-panel active"></div>
+      <div id="tab-shop" class="tab-panel"></div>
+      <div id="tab-worker" class="tab-panel"></div>
+      <div id="tab-games" class="tab-panel"></div>
+      <div id="tab-ach" class="tab-panel"></div>
+      <div id="tab-lb" class="tab-panel"></div>
+      <div id="tab-redeem" class="tab-panel"></div>
+      <div id="tab-stats" class="tab-panel"></div>
+    </div>
+    <div id="bottom-bar">
+      <button onclick="togglePause()" id="pause-btn">⏸️ Jeda</button>
+      <button onclick="openShop()" id="open-shop-btn" class="hidden" style="background:var(--green);color:var(--bg);font-weight:800">🏪 Buka Kedai</button>
+      <button onclick="saveGame()">💾 Simpan</button>
+      <button onclick="backToMenu()">🏠 Menu</button>
+      <button onclick="toggleSound()" id="sound-btn">🔊</button>
+      <button onclick="confirmReset()">🗑️ Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="day-end-modal" class="modal hidden"><div class="modal-content"><h2 id="de-title">🌙 Hari Selesai!</h2><div id="de-body"></div><button class="btn-conf" id="de-btn" onclick="closeShop()" style="margin-top:12px">🔒 Tutup Kedai</button></div></div>
+<div id="game-over-modal" class="modal hidden"><div class="modal-content"><h2>💸 Bankrap!</h2><p id="go-text"></p><button class="btn-conf" onclick="location.reload()">🔄 Mula Semula</button></div></div>
+<div id="event-banner" class="hidden"></div>
+<div id="ach-popup" class="hidden"><div class="ap-inner"><span>🏆</span><div><div id="ap-title"></div><div id="ap-desc"></div></div></div></div>
+
+<script>
+/* ===== SOUND ENGINE (Web Audio API) ===== */
+let audioCtx=null;
+function initAudio(){if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}}
+function playSound(freq,dur,type,vol){
+if(!S||!S.sound)return;initAudio();if(!audioCtx)return;
+const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type=type||"sine";o.frequency.value=freq;
+g.gain.setValueAtTime(vol||0.15,audioCtx.currentTime);
+g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+(dur||0.15));
+o.connect(g);g.connect(audioCtx.destination);
+o.start();o.stop(audioCtx.currentTime+(dur||0.15));
+}
+function sndClick(){playSound(800,0.05,"square",0.08)}
+function sndMoney(){playSound(523,0.1,"sine",0.12);setTimeout(()=>playSound(784,0.1,"sine",0.12),80)}
+function sndPerfect(){playSound(523,0.08,"sine",0.12);setTimeout(()=>playSound(659,0.08,"sine",0.12),60);setTimeout(()=>playSound(784,0.12,"sine",0.12),120)}
+function sndAngry(){playSound(200,0.2,"sawtooth",0.15);setTimeout(()=>playSound(150,0.2,"sawtooth",0.15),100)}
+function sndUpgrade(){playSound(440,0.1,"triangle",0.1);setTimeout(()=>playSound(660,0.1,"triangle",0.1),80);setTimeout(()=>playSound(880,0.15,"triangle",0.1),160)}
+function sndEvent(){playSound(330,0.15,"square",0.1);setTimeout(()=>playSound(440,0.15,"square",0.1),100)}
+function sndDayEnd(){playSound(523,0.15,"sine",0.1);setTimeout(()=>playSound(659,0.15,"sine",0.1),100);setTimeout(()=>playSound(523,0.15,"sine",0.1),200);setTimeout(()=>playSound(784,0.3,"sine",0.1),300)}
+function toggleSound(){S.sound=!S.sound;document.getElementById("sound-btn").textContent=S.sound?"🔊":"🔇"}
+
+/* ===== CONFIG ===== */
+const CFG={
+START_MONEY:100,START_REP:50,MAX_REP:100,MIN_REP:0,
+DAY_DUR:120,DAY_START_H:8,DAY_END_H:24,
+PC_MAX_LV:100,PC_BASE_INC:2.0,PC_INC_PER_LV:0.5,
+PC_BASE_COST:80,PC_COST_MULT:1.12,
+NEW_PC_COST:150,
+CUST_MAX_H:8,CUST_MIN_H:1,CUST_PATIENCE:30,CUST_SPAWN:4,QUEUE_MAX:8,
+REP_PERFECT:1,REP_OK:0,REP_FEW:-3,REP_MANY:-1,REP_LEAVE:-5,
+TIP_PERFECT:0.20,TIP_OK:0.05,
+AUTOSAVE:30,
+};
+const SHOPS=[
+{lv:1,name:"Kedai Buruk",maxPC:2,rent:20,cost:0,desc:"Kedai rosak, 2 PC je.",deco:"🏚️"},
+{lv:2,name:"Kedai Biasa",maxPC:5,rent:60,cost:500,desc:"Kedai kecil, 5 PC.",deco:"🏠"},
+{lv:3,name:"Cybercafe Kecil",maxPC:10,rent:200,cost:2500,desc:"10 PC, ada kipas.",deco:"🏬"},
+{lv:4,name:"Cybercafe Sederhana",maxPC:20,rent:600,cost:12000,desc:"Ada air-cond! 20 PC.",deco:"🏢"},
+{lv:5,name:"Cybercafe Besar",maxPC:35,rent:1800,cost:50000,desc:"35 PC, snack bar.",deco:"🏪"},
+{lv:6,name:"Gaming Lounge",maxPC:50,rent:4500,cost:200000,desc:"50 PC, RGB, gaming chair.",deco:"🎰"},
+{lv:7,name:"Esports Arena",maxPC:50,rent:10000,cost:1000000,desc:"Esports arena! MAX!",deco:"🏟️"},
+];
+const WORKERS=[
+{id:0,name:"Budak Newbie",emoji:"🧑",cost:200,wage:10,maxPC:2,acc:0.65,desc:"SPM lepasan. 2 PC, 65% betul."},
+{id:1,name:"Abang Pro",emoji:"👨",cost:800,wage:40,maxPC:5,acc:0.80,desc:"3 tahun exp. 5 PC, 80%."},
+{id:2,name:"Kakak Efficient",emoji:"👩",cost:3000,wage:120,maxPC:12,acc:0.90,desc:"12 PC, 90% accuracy."},
+{id:3,name:"Pro Gamer Manager",emoji:"🧑‍💼",cost:15000,wage:500,maxPC:30,acc:0.96,desc:"30 PC, 96% auto-mode."},
+{id:4,name:"AI System Bot",emoji:"🤖",cost:80000,wage:2000,maxPC:999,acc:0.99,desc:"Semua PC, 99%. End game!"},
+];
+// Games: retro at low levels, AAA latest at high levels
+const GAMES=[
+"Pong","Snake","Tetris","Pac-Man","Space Invaders","Galaga","Frogger","Donkey Kong","Mario Bros","Contra",
+"Street Fighter II","Mortal Kombat","Sonic","Aladdin","Earthworm Jim","Doom","Quake","Duke Nukem","Wolfenstein","Hexen",
+"StarCraft","WarCraft II","Age of Empires","C&C","Red Alert","Diablo","FF7","Resident Evil","Tomb Raider","MGS",
+"Half-Life","CS 1.6","Unreal Tournament","Quake III","TF Classic","The Sims","SimCity 3000","RCT","Civ II","Alpha Centauri",
+"GTA Vice City","GTA San Andreas","NFS Underground","Colin McRae Rally","Midnight Club 3","Halo 2","CoD 2","Battlefield 2","MoH","Far Cry",
+"World of Warcraft","Guild Wars","Ragnarok Online","MapleStory","Gunbound","Dota Allstars","LoL Beta","HoN","Vampire Bloodlines","Guild Wars 2",
+"Minecraft","Terraria","Roblox","Garry's Mod","Portal 2","L4D2","TF2","Borderlands 2","BioShock Infinite","Mass Effect 3",
+"Skyrim","Dark Souls","Witcher 3","Dragon Age Inq","Deus Ex HR","Dota 2","CSGO","PUBG","Fortnite","Apex Legends",
+"Valorant","Overwatch 2","R6 Siege","Warzone 2.0","Free Fire","Genshin Impact","Elden Ring","Cyberpunk 2077","Baldur's Gate 3","Starfield",
+"Black Myth Wukong","GTA 6","Monster Hunter Wilds","Death Stranding 2","Assassin's Creed Shadows","Helldivers 2","Dragon's Dogma 2","Final Fantasy XVI Rebirth","Hollow Knight Silksong","Metroid Prime 4",
+"Marvel's Wolverine","Ghost of Yotei","The Last of Us Part III","Elder Scrolls VI","Fable","Project Mojave","Half-Life 3","Portal 3","Team Fortress 3","Cyberpunk 2077 Orion"
+];
+const CUST_TYPES=[
+{type:"normal",emoji:"🧑",tipMult:1,patMult:1,weight:60,dialogs:["Boss, nak main {h} jam!","Boleh {h} jam tak?","Kasi {h} jam boss","{h} jam please boss"]},
+{type:"student",emoji:"🧑‍🎓",tipMult:0.7,patMult:1.3,weight:25,dialogs:["Cikgu, nak {h} jam...","Student price {h} jam?","Saya student, {h} jam boleh?","Belum bayar yuran, {h} jam je la"]},
+{type:"vip",emoji:"🤵",tipMult:2.5,patMult:0.7,weight:10,dialogs:["Saya VIP, {h} jam cepat!","VIP request: {h} jam sekarang!","Jangan buat saya tunggu, {h} jam!","VIP member nih, {h} jam!"]},
+{type:"pro",emoji:"🧑‍💻",tipMult:1.8,patMult:0.8,weight:15,dialogs:["Pro gamer nih, {h} jam","Tournament malam ni, {h} jam","Ranking match, {h} jam cepat!","Streaming nih, {h} jam boss!"]},
+];
+const CUST_NAMES=["Mat","Ali","Ahmad","Tan","Lim","Raju","Samy","Kumar","Aisyah","Fatimah","Mei","Wei","Priya","Devan","Hafiz","Faiz","Zul","Bob","Johan","Din","Muthu","Chong","Lee","Boy","Sis","Bro","Bang","Cikgu","Pakcik","Makcik","Abang","Kakak","Adik","Gamer","Pro","Noob","Camper","Feeder","Carry","Support","Mid","Top","ADC","Jungle","Sniper","Rusher","AFK","Tryhard","Casual","Weekend"];
+// Dialogs shown above PC while customer is playing
+const EVENTS=[
+const PLAYING_DIALOGS=[
+"Wah best nyer!","Lagilah!","Jangan camp!","GG bro!","Nice! Nice!","Hahahaha","Alamak!","Sakit weh","Cepat la!","Wah?!","Mantap!","Boleh ni","Gila siot","Hoki gila","Hampas!","Tersilap!","Aduh!","Yes! YES!","No way!","Serius ni","Gempak!","Kencang!","Pening la","Satu lagi","Last game","Rileks la","Hidup lagi","Tak boleh ni","Mati dah","Revive! Revive!","Push push!","Defend! Defend!","Clutch! Clutch!","EZ win!","GG WP!","Noob team!","Carry me!","Lag weh","DC plak","Sedih gila","Best giler","Terbaik!","Jom lagi","Last last","Ok ok ok","Yok yok","Cun cun","Kacak!","Mantap siot","Gelak gila","Mati la","Alahai","Wah wah","Syok weh","Cemas!","Sensasi!","Menggila!","Tak percaya","Hah?!","Eh?!","Weh?!","Bro?!","Cis!","Cheh!","Mak aiii","Aduhai","GG EZ","Loser la bro","Noob","Git gud","Skill issue","Touch grass","AFK plak","Feeder","Carry la bro","Support op","Mid diff","Top gap","Jungle diff","ADC noob","Ward la","Roshan!","Baron!","Push mid!","Back back!","B B B!","Rush B","Eco round","Clutch king","Headshot!","Lag shot","No reg","Save me!","Heal! Heal!","Ulti! Ulti!","Warded!","Miss mid!","Gank top!","Baited!","Juked!","Outplayed!","What a play!","Big brain","Poggers","KEKW","Sadge","Copium","Sheesh","No cap","Fr fr","Slaps","Banger","W goated","Based","Cringe","Oof","Yikes","Bruh","Skill diff","Aim diff","Lag plak","FPS drop","Screen freeze","Input lag","Mouse slip","Headset mati","Mic rosak","Stream lag","Chat spam","Sub baru!","Raid masuk","Sama sama","Terima kasih","Selamat datang","Apa khabar","Khabar baik","Syukur","Bersyukur","Reda","Sabar","Tabah","Kuat","Semangat","Panas","Dingin","Sejuk","Marah","Geram","Tension","Rileks","Chill","Santai","Tenang","Sepi","Senyap","Bising","Ribut","Kilat","Hujan","Pelangi","Cantik","Indah","Lawa","Comel","Manis","Pedas","Merah","Biru","Hijau","Kuning","Hitam","Putih","Emas","Perak","Bintang","Bulan","Matahari","Angkasa","Roket","AI","Cloud","Server","Lag","Ping","FPS","GG","WP","EZ","OP","UP","AFK","BRB","OMG","LOL","ROFL","SMH","NGL","TBH","IMO","FYI","ASAP","DIY","ETA","TBA","TBD","WIP","MVP","MIA","KDA","AOE","DPS","HP","MP","XP","LVL","EXP","RNG","QTE","NPC","BOSS","LOOT","XP","GRIND","FARM","BUFF","NERF","PATCH","META","COUNTER","RUSH","STALL","BAIT","PEEL","DIVE","SCOUT","WARD","SMOKE","FLASH","ULT","PASSIVE","COMBO","CHAIN","CANCEL","BUFFER","FRAME","TICK","COOLDOWN","MANA","ENERGY","RAGE","FOCUS","BERSERK","STEALTH","CAMO","CLOAK","SHIELD","BARRIER","WALL","TOWER","INHIBITOR","NEXUS","ANCIENT","THRONE","CORE","BASE","LANE","MID","TOP","BOT","JUNGLE","RIVER","SHOP","FOUNTAIN","TELEPORT","RECALL","HEARTH","GARRISON","STABLE","BARRACKS","WORKSHOP","ALTAR","SHRINE","TEMPLE","CASTLE","FORT","KEEP","TOWER","WALL","GATE","MOAT","BRIDGE","ROAD","PATH","TRAIL","TRACK","ROUTE","WAY","DIR","MUD","GRASS","TREE","ROCK","HILL","MOUNTAIN","VALLEY","RIVER","LAKE","SEA","OCEAN","BEACH","DESERT","FOREST","JUNGLE","SWAMP","TUNDRA","TAIGA","SAVANNA","PRAIRIE","MEADOW","FIELD","FARM","VILLAGE","TOWN","CITY","METROPOLIS","CAPITAL","EMPIRE","KINGDOM","REALM","WORLD","PLANET","GALAXY","UNIVERSE","MULTIVERSE","OMNIVERSE","DIMENSION","REALITY","TIMELINE","EPOCH","ERA","AGE","EON","MILLENNIUM","CENTURY","DECADE","YEAR","MONTH","WEEK","DAY","HOUR","MINUTE","SECOND","MOMENT","INSTANT","FLASH","BLINK","WINK","GLANCE","PEEK","STARE","GAZE","LOOK","SEE","WATCH","OBSERVE","NOTICE","SPOT","FIND","DISCOVER","EXPLORE","ADVENTURE","QUEST","MISSION","TASK","GOAL","DREAM","HOPE","WISH","DESIRE","WANT","NEED","HAVE","HOLD","KEEP","LOSE","FIND","GAIN","WIN","BEAT","CRUSH","DESTROY","BUILD","CREATE","MAKE","CRAFT","FORGE","COOK","BAKE","MIX","BLEND","STIR","POUR","SERVE","EAT","DRINK","TASTE","SAVOR","ENJOY","RELISH","SLEEP","REST","WAKE","RISE","SHINE","DREAM","HOPE","LIVE","LOVE","LAUGH","CRY","SMILE","FROWN","GLARE","WINK","NOD","SHAKE","SHRUG","WAVE","POINT","GRAB","HOLD","DROP","THROW","CATCH","KICK","PUNCH","SLAP","PUSH","PULL","LIFT","CARRY","DRAG","DROP","PLACE","SET","PUT","TAKE","GIVE","SHARE","TRADE","SWAP","EXCHANGE","BUY","SELL","BID","AUCTION","BARGAIN","HAGGLE","NEGOTIATE","DEAL","CONTRACT","AGREE","SIGN","SEAL","DELIVER","RECEIVE","ACCEPT","REJECT","DECLINE","REFUSE","DENY","CONFIRM","APPROVE","CANCEL","VOID","NULL","DELETE","ERASE","WIPE","CLEAR","CLEAN","WASH","RINSE","DRY","POLISH","SHINE","GLOW","SPARKLE","SHIMMER","GLEAM","GLINT","FLASH","BLINK","WINK","TWINKLE","DREAM","FANTASIZE","IMAGINE","CREATE","INVENT","DISCOVER","EXPLORE","ADVENTURE","JOURNEY","TRAVEL","WANDER","ROAM","STRAY","LOST","FOUND","SEEK","SEARCH","HUNT","TRACK","FOLLOW","LEAD","GUIDE","DIRECT","STEER","NAVIGATE","SAIL","FLY","DRIVE","RIDE","WALK","RUN","SPRINT","JOG","CRAWL","CLIMB","DESCEND","ASCEND","RISE","FALL","DROP","SINK","FLOAT","HOVER","GLIDE","SOAR","DIVE","PLUNGE","CRASH","SMASH","BREAK","SHATTER","CRACK","SPLIT","TEAR","RIP","CUT","SLICE","CHOP","DICE","MINCE","GRIND","CRUSH","POWDER","DUST","ASH","SMOKE","STEAM","VAPOR","CLOUD","FOG","MIST","HAZE","SMOG","DEW","FROST","ICE","SNOW","RAIN","STORM","THUNDER","LIGHTNING","WIND","BREEZE","GUST","GALE","HURRICANE","TYPHOON","TORNADO","CYCLONE","BLIZZARD","AVALANCHE","LANDSLIDE","EARTHQUAKE","TSUNAMI","VOLCANO","ERUPTION","MAGMA","LAVA","ROCK","STONE","PEBBLE","BOULDER","MOUNTAIN","HILL","VALLEY","CANYON","GORGE","RAVINE","CLIFF","BLUFF","RIDGE","PEAK","SUMMIT","BASE","FOOTHILL","SLOPE","TERRACE","PLATEAU","MESA","BUTTE","DUNE","SAND","DESERT","OASIS","MIRAGE","PALM","OASIS","WELL","SPRING","STREAM","BROOK","CREEK","RIVER","LAKE","POND","POOL","PUDDLE","OCEAN","SEA","GULF","BAY","COVE","HARBOR","PORT","DOCK","PIER","WHARF","QUAY","MARINA","BEACH","SHORE","COAST","CLIFF","REEF","ISLAND","ISLE","PENINSULA","CAPE","PROMONTORY","HEADLAND","SPIT","BAR","SANDBAR","SHOAL","SANDBAR","ATOLL","ARCHIPELAGO","CHAIN","CLUSTER","GROUP","BUNCH","SET","COLLECTION","GATHERING","ASSEMBLY","MEETING","CONFERENCE","CONVENTION","SUMMIT","COUNCIL","COMMITTEE","BOARD","PANEL","GROUP","TEAM","SQUAD","CREW","STAFF","FACULTY","PERSONNEL","WORKERS","EMPLOYEES","STAFF","CREW","GANG","MOB","CROWD","THRONG","SWARM","HERD","FLOCK","PACK","PRIDE","POD","SCHOOL","SHOAL","COLONY","SETTLEMENT","VILLAGE","TOWN","CITY","METROPOLIS","MEGALOPOLIS","CONURBATION","AGGLOMERATION","URBAN","RURAL","SUBURBAN","EXURBAN","PERIURBAN","METROPOLITAN","COSMOPOLITAN","GLOBAL","INTERNATIONAL","WORLDWIDE","UNIVERSAL","COSMIC","GALACTIC","UNIVERSAL","OMNIPRESENT","OMNISCIENT","OMNIPOTENT","SUPREME","ULTIMATE","ABSOLUTE","INFINITE","ETERNAL","EVERLASTING","PERPETUAL","CONTINUOUS","CONTINUAL","UNREMITTING","UNCEASING","UNENDING","UNFAILING","UNWAVERING","UNFLINCHING","UNFALTERING","UNYIELDING","UNBREAKABLE","UNSHAKEABLE","UNSTOPPABLE","INVINCIBLE","INDESTRUCTIBLE","IMMORTAL","IMPERISHABLE","INCORRUPTIBLE","IMMACULATE","IMPECCABLE","FLAWLESS","PERFECT"
+];
+{id:"rush",name:"🔥 RUSH HOUR!",desc:"Customer 2x ganda!",dur:20,type:"spawn",mult:2},
+{id:"tour",name:"🏆 TOURNAMENT DAY!",desc:"Semua main 2x lama!",dur:30,type:"hours",mult:2},
+{id:"rain",name:"🌧️ Hujan Lebat!",desc:"Customer sikit...",dur:25,type:"spawn",mult:0.5},
+{id:"viral",name:"📱 Viral di TikTok!",desc:"Reputasi naik!",dur:20,type:"rep",mult:5},
+{id:"blackout",name:"⚡ Putus Arus!",desc:"PC rosak sekejap!",dur:10,type:"offline"},
+{id:"payday",name:"💰 Hari Gaji!",desc:"Tip 2x ganda!",dur:25,type:"tip",mult:2},
+{id:"exam",name:"📚 Musim Exam!",desc:"Student ramai datang!",dur:30,type:"student",mult:3},
+{id:"stream",name:"📺 Streamer Datang!",desc:"Pro gamer ramai!",dur:25,type:"pro",mult:3},
+{id:"vipday",name:"🌟 VIP Day!",desc:"VIP customer datang!",dur:20,type:"vip",mult:3},
+{id:"lunch",name:"🍱 Lunch Rush!",desc:"Customer datang 1.5x!",dur:15,type:"spawn",mult:1.5},
+{id:"cold",name:"🥶 Cuaca Sejuk!",desc:"Orang tak keluar rumah...",dur:20,type:"spawn",mult:0.6},
+];
+const ACHS=[
+{id:"c1",i:"👋",t:"Customer Pertama",d:"Serve 1 customer",c:s=>s.sc.cust>=1},
+{id:"c10",i:"🔟",t:"10 Customer",d:"Serve 10 customer",c:s=>s.sc.cust>=10},
+{id:"c50",i:"🔥",t:"50 Customer",d:"Serve 50 customer",c:s=>s.sc.cust>=50},
+{id:"c100",i:"💯",t:"100 Customer",d:"Serve 100 customer",c:s=>s.sc.cust>=100},
+{id:"c500",i:"🚀",t:"500 Customer",d:"Serve 500 customer",c:s=>s.sc.cust>=500},
+{id:"p1",i:"⭐",t:"Sempurna!",d:"1x perfect serve",c:s=>s.sc.perfect>=1},
+{id:"p10",i:"🌟",t:"Pro Server",d:"10x perfect",c:s=>s.sc.perfect>=10},
+{id:"p50",i:"✨",t:"Master Server",d:"50x perfect",c:s=>s.sc.perfect>=50},
+{id:"a1",i:"😠",t:"Customer Mengamuk",d:"1x customer mengamuk",c:s=>s.sc.angry>=1},
+{id:"a10",i:"😡",t:"Bad Service",d:"10x mengamuk",c:s=>s.sc.angry>=10},
+{id:"lv10",i:"🖥️",t:"PC Level 10",d:"Upgrade PC ke lv 10",c:s=>s.sc.maxPC>=10},
+{id:"lv25",i:"💻",t:"PC Level 25",d:"Upgrade PC ke lv 25",c:s=>s.sc.maxPC>=25},
+{id:"lv50",i:"🎮",t:"PC Level 50",d:"Upgrade PC ke lv 50",c:s=>s.sc.maxPC>=50},
+{id:"lv100",i:"🏆",t:"PC MAX!",d:"PC level 100",c:s=>s.sc.maxPC>=100},
+{id:"s2",i:"🏪",t:"Kedai Baru",d:"Kedai lv 2",c:s=>s.shop>=2},
+{id:"s4",i:"🏬",t:"Cybercafe Sebenar",d:"Kedai lv 4",c:s=>s.shop>=4},
+{id:"s7",i:" Stadium",t:"Esports Arena!",d:"Kedai MAX (7)",c:s=>s.shop>=7},
+{id:"w1",i:"🧑",t:"Pekerja Pertama",d:"Sewa 1 pekerja",c:s=>s.workers.length>=1},
+{id:"w3",i:"👥",t:"Ada Staff",d:"Sewa 3 pekerja",c:s=>s.workers.length>=3},
+{id:"w5",i:"🤖",t:"Auto Mode",d:"Sewa 5 pekerja",c:s=>s.workers.length>=5},
+{id:"d5",i:"📅",t:"5 Hari",d:"Hidup 5 hari",c:s=>s.day>=5},
+{id:"d10",i:"📆",t:"10 Hari",d:"Hidup 10 hari",c:s=>s.day>=10},
+{id:"d30",i:"🗓️",t:"30 Hari",d:"Hidup 30 hari",c:s=>s.day>=30},
+{id:"d50",i:"🎖️",t:"Veteran",d:"Hidup 50 hari",c:s=>s.day>=50},
+{id:"r1k",i:"💰",t:"Kaya Sikit",d:"RM 1,000",c:s=>s.money>=1000},
+{id:"r10k",i:"💎",t:"Kaya",d:"RM 10,000",c:s=>s.money>=10000},
+{id:"r100k",i:"👑",t:"Tauke",d:"RM 100,000",c:s=>s.money>=100000},
+{id:"r1m",i:"🤑",t:"Millionaire",d:"RM 1,000,000",c:s=>s.money>=1000000},
+{id:"rep100",i:"⭐",t:"Reputasi Sempurna",d:"Reputasi 100",c:s=>s.rep>=100},
+{id:"bd500",i:"📈",t:"Hari Terbaik",d:"RM 500/hari",c:s=>s.sc.bestDay>=500},
+{id:"bd5k",i:"🚀",t:"Hari Hebat",d:"RM 5,000/hari",c:s=>s.sc.bestDay>=5000},
+{id:"vip1",i:"🤵",t:"VIP Customer!",d:"Serve 1 VIP",c:s=>s.sc.vip>=1},
+{id:"pro1",i:"🧑‍💻",t:"Pro Gamer!",d:"Serve 1 pro gamer",c:s=>s.sc.pro>=1},
+{id:"stu1",i:"🧑‍🎓",t:"Student Discount",d:"Serve 1 student",c:s=>s.sc.student>=1},
+];
+
+/* ===== STATE ===== */
+let S=null;let G={dayTime:0,spawnT:0,servePC:null,serveH:0,event:null,lastTick:0,autoT:0,custCount:0,combo:0,comboT:0,dirtyPCs:true,paused:false};
+const SAVE_KEY="cybercafe_sim_v3";
+const ID_KEY="cybercafe_sim_id";
+const LB_KEY="cybercafe_sim_lb";
+const TUT_KEY="cybercafe_sim_tut";
+
+function genID(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let id="CCS-";for(let i=0;i<5;i++)id+=c[Math.floor(Math.random()*c.length)];return id}
+function getID(){let id=localStorage.getItem(ID_KEY);if(!id){id=genID();localStorage.setItem(ID_KEY,id)}return id}
+
+function defaultState(){
+return{
+money:CFG.START_MONEY,rep:CFG.START_REP,day:1,shop:1,
+shopName:"",selectedBadges:[],
+pcs:[{id:0,lv:1,st:"free",cust:null,hg:0,hp:0,ie:0},{id:1,lv:1,st:"free",cust:null,hg:0,hp:0,ie:0}],
+workers:[],queue:[],
+sc:{cust:0,perfect:0,angry:0,days:0,upg:0,maxPC:1,bestDay:0,totalEarn:0,vip:0,pro:0,student:0},
+ach:{},dayInc:0,dayExp:0,sound:true,redeemedCodes:[],
+};
+}
+
+/* ===== LEADERBOARD ===== */
+function getLeaderboard(){try{return JSON.parse(localStorage.getItem(LB_KEY)||"[]")}catch(e){return[]}}
+function addToLeaderboard(){
+const lb=getLeaderboard();
+lb.push({id:getID(),day:S.day,money:S.money,score:S.sc.totalEarn,rep:S.rep,date:Date.now()});
+lb.sort((a,b)=>b.score-a.score);
+localStorage.setItem(LB_KEY,JSON.stringify(lb.slice(0,10)));
+}
+function renderLeaderboard(){
+const lb=getLeaderboard();let h="<h3 style='font-size:13px;margin-bottom:8px'>📋 Leaderboard Tempatan</h3>";
+if(lb.length===0){h+="<p style='font-size:12px;color:var(--dim);text-align:center;padding:20px'>Belum ada score. Main dulu!</p>"}
+for(let i=0;i<lb.length;i++){
+const e=lb[i];const rc=i===0?"gold":i===1?"silver":i===2?"bronze":"";
+h+=`<div class="lb-row"><span class="lb-rank ${rc}">${i+1}</span><span class="lb-name">${e.id}</span><span class="lb-score">RM${fmt(e.score)}</span></div>`;
+}
+document.getElementById("tab-lb").innerHTML=h;
+}
+function renderMenuLB(){
+const lb=getLeaderboard();let h="";
+if(lb.length===0){h="<div style='font-size:11px;color:var(--dim)'>Belum ada score</div>"}
+for(let i=0;i<Math.min(3,lb.length);i++){
+const e=lb[i];const rc=i===0?"gold":i===1?"silver":i===2?"bronze":"";
+h+=`<div class="menu-lb-row"><span class="lb-rank ${rc}">${i+1}.</span> <span>${e.id}</span> <b>RM${fmt(e.score)}</b></div>`;
+}
+document.getElementById("lb-content").innerHTML=h;
+}
+
+/* ===== SAVE/LOAD ===== */
+function saveGame(){S.lastSave=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(S))}
+function loadGame(){try{const r=localStorage.getItem(SAVE_KEY);if(!r)return null;const d=JSON.parse(r);return{...defaultState(),...d,sc:{...defaultState().sc,...d.sc}}}catch(e){return null}}
+function confirmReset(){if(confirm("Reset semua?")){localStorage.removeItem(SAVE_KEY);location.reload()}}
+function backToMenu(){saveGame();document.getElementById("game-screen").classList.add("hidden");document.getElementById("menu-screen").classList.remove("hidden");updateMenu()}
+
+/* ===== TUTORIAL ===== */
+const TUT_STEPS=[
+{title:"👋 Selamat Datang ke Cybercafe Simulator!",text:"Anda tauke cybercafe baru. Mula dari kedai buruk, jadi esports arena!",steps:["🎯 Serve customer dengan betul","💰 Kumpul duit","⬆️ Upgrade PC & kedai","🤖 Sewa pekerja AI"]},
+{title:"🖥️ Cara Serve Customer",text:"Customer duduk kat PC dan cakap nak berapa jam. Awak kena tekan ➕➖ untuk set jam yang betul!",steps:["✅ Exact = PERFECT (tip 20%)","💸 Lebih jam = RUGI (PC locked)","😡 Kurang jam = MENGAMUK (rep turun)","⏱️ Customer tak sabar — cepat!"]},
+{title:"⬆️ Upgrade System",text:"Setiap PC boleh upgrade sampai level 100. Setiap level buka game baru + income naik. Upgrade kedai untuk tambah PC!",steps:["🖥️ 100 level per PC, 1 game per level","🏪 7 level kedai (Kedai Buruk → Esports Arena)","🤖 5 jenis pekerja AI","🏆 34 pencapaian untuk unlock"]},
+];
+let tutStep=0;
+function showTutorial(){
+tutStep=0;document.getElementById("tutorial-overlay").classList.remove("hidden");nextTutStep();
+}
+function nextTutStep(){
+if(tutStep>=TUT_STEPS.length){document.getElementById("tutorial-overlay").classList.add("hidden");localStorage.setItem(TUT_KEY,"done");return}
+const s=TUT_STEPS[tutStep];
+document.getElementById("tut-title").textContent=s.title;
+document.getElementById("tut-text").textContent=s.text;
+document.getElementById("tut-steps").innerHTML=s.steps.map(st=>`<div class="tut-step">${st}</div>`).join("");
+document.getElementById("tut-next-btn").textContent=tutStep===TUT_STEPS.length-1?"Mula Main! 🚀":"Seterusnya ➡️";
+tutStep++;
+}
+
+/* ===== MENU ===== */
+function updateMenu(){
+document.getElementById("menu-id-display").textContent=getID();
+const saved=loadGame();
+document.getElementById("btn-continue").disabled=!saved;
+if(saved){document.getElementById("btn-continue").textContent=`▶️ SAMBUNG BERMAIN (Hari ${saved.day})`}
+renderMenuLB();
+}
+function startNewGame(){
+if(loadGame()){
+if(!confirm("Ada save lama. Overwrite?\n\n⚠️ ID unik anda akan ditukar ke ID baru!"))return;
+const newId=genID();localStorage.setItem(ID_KEY,newId);
+notif(`🆔 ID baru: ${newId}`,"green");
+}
+S=defaultState();localStorage.setItem(SAVE_KEY,JSON.stringify(S));
+if(!localStorage.getItem(TUT_KEY)){showTutorial();enterGame()}else{enterGame()}
+}
+function continueGame(){S=loadGame();if(!S){alert("Tak ada save!");return}enterGame()}
+function enterGame(){
+document.getElementById("menu-screen").classList.add("hidden");
+document.getElementById("game-screen").classList.remove("hidden");
+G.dayTime=0;G.spawnT=0;G.event=null;G.lastTick=performance.now();G.autoT=0;G.combo=0;
+renderAll();switchTab("pc");updateDayNight();updateShopBanner();
+requestAnimationFrame(loop);
+}
+
+/* ===== GAME LOOP ===== */
+function loop(ts){
+const dt=Math.min(.1,(ts-G.lastTick)/1000);G.lastTick=ts;
+try{if(dt>0&&!G.paused)tick(dt)}catch(e){console.error('Loop error:',e)}
+requestAnimationFrame(loop);
+}
+function togglePause(){
+G.paused=!G.paused;
+const btn=document.getElementById("pause-btn");
+if(btn)btn.textContent=G.paused?"▶️ Sambung":"⏸️ Jeda";
+if(G.paused){notif("⏸️ Game dijeda","dim")}else{G.lastTick=performance.now();notif("▶️ Game sambung","green")}
+}
+
+// Reset lastTick when browser tab becomes visible again (prevents huge dt jump)
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){G.lastTick=performance.now()}});
+function tick(dt){
+G.dayTime+=dt;
+G.spawnT+=dt;
+const si=spawnInterval();
+if(G.spawnT>=si){G.spawnT=0;spawnCust()}
+updatePatience(dt);updatePlaying(dt);workerServe();updateServeUI(dt);updateEvent(dt);
+if(G.comboT>0){G.comboT-=dt;if(G.comboT<=0)G.combo=0}
+if(G.dayTime>10&&G.dayTime<CFG.DAY_DUR-20&&!G.event&&Math.random()<.002)triggerEvent();
+if(G.dayTime>=CFG.DAY_DUR){endDay();return}
+G.autoT+=dt;
+if(G.autoT>=CFG.AUTOSAVE){G.autoT=0;saveGame()}
+// Only full re-render when PC status changes, otherwise just update dynamics
+if(G.dirtyPCs){G.dirtyPCs=false;renderPCs();renderQueue();if(curTab==="pc")renderTab("pc")}
+if(Math.floor(G.dayTime*2)!==Math.floor((G.dayTime-dt)*2)){updateHUD();updatePCDynamics();updateDayNight()}
+}
+
+/* ===== DAY/NIGHT ===== */
+function updateDayNight(){
+const hp=G.dayTime/CFG.DAY_DUR;
+const ch=CFG.DAY_START_H+hp*(CFG.DAY_END_H-CFG.DAY_START_H);
+const overlay=document.getElementById("day-night-overlay");
+const body=document.body;
+if(ch<12){overlay.style.background="rgba(255,220,100,0.03)";body.className="day-theme"}
+else if(ch<17){overlay.style.background="rgba(255,150,50,0.05)";body.className="day-theme"}
+else if(ch<19){overlay.style.background="rgba(200,100,50,0.12)";body.className="dusk-theme"}
+else{overlay.style.background="rgba(0,0,30,0.25)";body.className="night-theme"}
+}
+
+/* ===== CUSTOMERS ===== */
+function pickCustType(){
+let total=CUST_TYPES.reduce((s,t)=>s+t.weight,0);
+let r=Math.random()*total;
+for(const t of CUST_TYPES){r-=t.weight;if(r<=0)return t}
+return CUST_TYPES[0];
+}
+function spawnCust(){
+if(S.queue.length>=CFG.QUEUE_MAX)return;
+let minH=CFG.CUST_MIN_H,maxH=CFG.CUST_MAX_H;
+if(S.rep<30)maxH=4;if(S.rep>70)minH=2;
+let wh=Math.floor(Math.random()*(maxH-minH+1))+minH;
+if(G.event&&G.event.type==="hours")wh=Math.min(16,wh*G.event.mult);
+const ct=pickCustType();
+// Event overrides customer type
+if(G.event&&G.event.type==="student")ct=CUST_TYPES.find(t=>t.type==="student");
+if(G.event&&G.event.type==="pro")ct=CUST_TYPES.find(t=>t.type==="pro");
+if(G.event&&G.event.type==="vip")ct=CUST_TYPES.find(t=>t.type==="vip");
+const dialog=ct.dialogs[Math.floor(Math.random()*ct.dialogs.length)].replace("{h}",wh);
+const pat=CFG.CUST_PATIENCE*ct.patMult;
+S.queue.push({id:G.custCount++,name:CUST_NAMES[Math.floor(Math.random()*CUST_NAMES.length)],emoji:ct.emoji,wh:wh,pat:pat,maxPat:pat,ctype:ct.type,tipMult:ct.tipMult,dialog:dialog});
+renderQueue();assignFromQueue();
+}
+function assignFromQueue(){
+if(S.queue.length===0)return;
+const fp=S.pcs.find(p=>p.st==="free");if(!fp)return;
+const c=S.queue.shift();fp.st="waiting";fp.cust=c;fp.hg=0;G.dirtyPCs=true;
+const walkEl=document.createElement("div");walkEl.className="cust-walk";walkEl.textContent=c.emoji;
+document.getElementById("shop-visual").appendChild(walkEl);
+setTimeout(()=>walkEl.remove(),800);
+renderQueue();renderPCs();
+}
+function adjH(d){if(!G.servePC)return;G.serveH=Math.max(0,Math.min(20,G.serveH+d));document.getElementById("sp-show").textContent=G.serveH;sndClick()}
+function openServe(pid){
+const pc=S.pcs[pid];if(!pc||pc.st!=="waiting"||!pc.cust)return;
+G.servePC=pc;G.serveH=0;
+document.getElementById("serve-panel").classList.remove("hidden");
+const ct=pc.cust.ctype||"normal";
+document.getElementById("sp-info").innerHTML=`<div class="sp-emoji">${pc.cust.emoji}</div><div class="sp-text">${pc.cust.name} @ PC ${pid+1}</div><div class="sp-ctype ${ct}">${ct.toUpperCase()}</div><div class="sp-req">"${pc.cust.dialog}"</div>`;
+document.getElementById("sp-show").textContent="0";
+}
+function closeServe(){document.getElementById("serve-panel").classList.add("hidden");G.servePC=null;G.serveH=0}
+function confirmServe(){if(!G.servePC)return;if(G.serveH<=0){notif("Pilih jam dulu!","red");return}serveCust(G.servePC.id,G.serveH);closeServe()}
+function serveCust(pid,gh,auto){
+const pc=S.pcs[pid];if(!pc||pc.st!=="waiting"||!pc.cust)return;
+const wh=pc.cust.wh,diff=gh-wh,inc=pcInc(pc),tm=pc.cust.tipMult||1;
+pc.cust.playDialog=PLAYING_DIALOGS[Math.floor(Math.random()*PLAYING_DIALOGS.length)];
+let pay=0,rep=0,txt="",type="";
+if(diff===0){pay=inc*wh*(1+CFG.TIP_PERFECT*tm);rep=CFG.REP_PERFECT;txt=`✅ PERFECT! +RM${pay.toFixed(2)} (tip ${(CFG.TIP_PERFECT*tm*100).toFixed(0)}%)`;type="perfect";S.sc.perfect++;G.combo++;G.comboT=5;sndPerfect()}
+else if(Math.abs(diff)===1){pay=inc*wh*(1+CFG.TIP_OK*tm);rep=CFG.REP_OK;txt=diff>0?`👌 OK +RM${pay.toFixed(2)} (1jam lebih)`:`👌 OK +RM${pay.toFixed(2)} (1jam kurang)`;type="ok";sndMoney()}
+else if(diff>1){pay=inc*wh;rep=CFG.REP_MANY;txt=`💸 RUGI! +RM${pay.toFixed(2)} PC locked ${diff}jam!`;type="rugi";sndAngry();
+S.money+=pay;S.dayInc+=pay;S.sc.totalEarn+=pay;S.rep=Math.max(CFG.MIN_REP,S.rep+rep);S.sc.cust++;
+if(pc.cust.ctype==="vip")S.sc.vip++;if(pc.cust.ctype==="pro")S.sc.pro++;if(pc.cust.ctype==="student")S.sc.student++;
+pc.hg=gh;pc.hp=0;pc.st="playing";pc.ie=pay;floatMoney(pid,pay,true);notif(txt,"orange");
+G.dirtyPCs=true;renderPCs();updateHUD();checkAch();return}
+else{pay=inc*gh;rep=CFG.REP_FEW;txt=`😡 MENGAMUK! +RM${pay.toFixed(2)} rep turun!`;type="angry";S.sc.angry++;sndAngry();G.combo=0}
+S.money+=pay;S.dayInc+=pay;S.sc.totalEarn+=pay;S.rep=Math.max(CFG.MIN_REP,Math.min(CFG.MAX_REP,S.rep+rep));S.sc.cust++;
+if(pc.cust.ctype==="vip")S.sc.vip++;if(pc.cust.ctype==="pro")S.sc.pro++;if(pc.cust.ctype==="student")S.sc.student++;
+pc.hg=gh;pc.hp=0;pc.st="playing";pc.ie=pay;
+floatMoney(pid,pay,true);notif(txt,type==="perfect"?"green":type==="angry"?"red":"orange");
+G.dirtyPCs=true;renderPCs();updateHUD();checkAch()
+}
+function updatePatience(dt){for(const pc of S.pcs){if(pc.st==="waiting"&&pc.cust){pc.cust.pat-=dt;if(pc.cust.pat<=0){pc.st="free";pc.cust=null;S.rep=Math.max(CFG.MIN_REP,S.rep+CFG.REP_LEAVE);notif("😡 Customer pergi marah! Rep -5","red");sndAngry();G.dirtyPCs=true;renderPCs();updateHUD();assignFromQueue()}}}}
+function updatePlaying(dt){for(const pc of S.pcs){if(pc.st==="playing"){
+// Time per hour: base 5s + 0.5s per hour given (more hours = slower bar = more time to read dialog)
+// 1 jam = 5.5s, 4 jam = 7s/jam(28s total), 8 jam = 9s/jam(72s total)
+const secPerHour=5+(pc.hg*0.5);
+pc.hp+=dt/secPerHour;
+// Change dialog every ~2 seconds
+if(pc.cust){pc.cust.dlgT=(pc.cust.dlgT||0)+dt;if(pc.cust.dlgT>=2){pc.cust.dlgT=0;pc.cust.playDialog=PLAYING_DIALOGS[Math.floor(Math.random()*PLAYING_DIALOGS.length)]}}
+if(pc.hp>=pc.hg){pc.st="free";pc.cust=null;pc.hg=0;pc.hp=0;G.dirtyPCs=true;renderPCs();assignFromQueue()}}}}
+function updateServeUI(dt){if(!G.servePC||!G.servePC.cust)return;G.servePC.cust.pat-=dt;const pct=(G.servePC.cust.pat/G.servePC.cust.maxPat)*100;const f=document.getElementById("sp-pfill");if(f){f.style.width=Math.max(0,pct)+"%";f.style.background=pct<30?"#ff4757":pct<60?"#ffd60a":"#00ff88"}if(G.servePC.cust.pat<=0)closeServe()}
+
+/* ===== PC ===== */
+function pcInc(pc){return CFG.PC_BASE_INC+(pc.lv-1)*CFG.PC_INC_PER_LV}
+function pcUpCost(pc){return Math.floor(CFG.PC_BASE_COST*Math.pow(CFG.PC_COST_MULT,pc.lv-1))}
+function pcGame(pc){return GAMES[pc.lv-1]||"Unknown"}
+function isAAAGame(lv){return lv>=91}
+function upgradePC(pid){
+const pc=S.pcs[pid];if(!pc)return;if(pc.st!=="free"){notif("PC tengah digunakan!","red");return}
+if(pc.lv>=CFG.PC_MAX_LV){notif("PC dah max!","red");return}
+const c=pcUpCost(pc);if(S.money<c){notif("Tak cukup duit!","red");return}
+S.money-=c;pc.lv++;S.sc.upg++;if(pc.lv>S.sc.maxPC)S.sc.maxPC=pc.lv;
+sndUpgrade();
+// Upgrade effect animation
+const slot=document.querySelectorAll(".pc-slot")[pid];
+if(slot){const eff=document.createElement("div");eff.className="upg-effect";slot.appendChild(eff);setTimeout(()=>eff.remove(),600);slot.classList.add("upgrading");setTimeout(()=>slot.classList.remove("upgrading"),600)}
+const aaa=isAAAGame(pc.lv)?" ⭐AAA!":"";
+notif(`⬆️ PC${pid+1} → Lv${pc.lv}! ${pcGame(pc)}${aaa}`,"green");
+G.dirtyPCs=true;renderPCs();renderTab("pc");updateHUD();checkAch();
+}
+function addPC(){
+const shop=SHOPS[S.shop-1];if(S.pcs.length>=shop.maxPC){notif("Kedai penuh! Upgrade kedai.","red");return}
+if(S.money<CFG.NEW_PC_COST){notif(`Beli PC: RM${CFG.NEW_PC_COST}`,"red");return}
+S.money-=CFG.NEW_PC_COST;S.pcs.push({id:S.pcs.length,lv:1,st:"free",cust:null,hg:0,hp:0,ie:0});
+G.dirtyPCs=true;sndUpgrade();notif(`🖥️ PC baru! (PC${S.pcs.length})`,"green");renderPCs();renderTab("pc");updateHUD();
+}
+
+/* ===== SHOP ===== */
+function curShop(){return SHOPS[S.shop-1]}
+function nextShop(){return SHOPS[S.shop]||null}
+function upgradeShop(){
+const nx=nextShop();if(!nx){notif("Kedai dah max!","green");return}
+if(S.money<nx.cost){notif(`Upgrade: RM${nx.cost}`,"red");return}
+S.money-=nx.cost;S.shop++;sndUpgrade();notif(`🏪 ${curShop().name}!`,"green");
+document.getElementById("shop-deco").textContent=curShop().deco;
+renderPCs();renderTab("shop");updateHUD();checkAch();
+}
+
+/* ===== WORKERS ===== */
+function hireWorker(wid){
+const wt=WORKERS[wid];if(!wt)return;if(S.money<wt.cost){notif(`Sewa: RM${wt.cost}`,"red");return}
+if(S.workers.find(w=>w.tid===wid)){notif("Dah ada!","red");return}
+S.money-=wt.cost;S.workers.push({tid:wid,name:wt.name,emoji:wt.emoji,maxPC:wt.maxPC,acc:wt.acc,wage:wt.wage});
+sndUpgrade();notif(`${wt.emoji} ${wt.name} diupah!`,"green");renderTab("worker");updateHUD();checkAch();
+}
+function totalWages(){return S.workers.reduce((s,w)=>s+w.wage,0)}
+function workerCap(){return S.workers.reduce((s,w)=>s+w.maxPC,0)}
+function workerServe(){
+const cap=workerCap();if(cap===0)return;
+const ns=S.pcs.filter(p=>p.st==="waiting"&&p.cust);if(ns.length===0)return;
+let h=0;const acc=Math.max(...S.workers.map(w=>w.acc));
+for(const pc of ns){if(h>=cap)break;const ok=Math.random()<acc;let gh=ok?pc.cust.wh:Math.max(1,pc.cust.wh+(Math.random()<.5?-1:1));if(Math.random()<.3)gh=Math.max(1,pc.cust.wh+(Math.random()<.5?-2:2));serveCust(pc.id,gh,true);h++}
+}
+
+/* ===== EVENTS ===== */
+function triggerEvent(){
+const ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];G.event={...ev,tl:ev.dur};
+showBanner(ev.name,ev.desc);sndEvent();
+if(ev.type==="offline"){for(const pc of S.pcs){if(pc.st==="playing"){pc.st="free";pc.cust=null;pc.hg=0;pc.hp=0}}renderPCs()}
+}
+function updateEvent(dt){if(!G.event)return;G.event.tl-=dt;if(G.event.tl<=0){G.event=null;document.getElementById("event-banner").classList.add("hidden")}}
+function spawnInterval(){
+let b=CFG.CUST_SPAWN;b/=(0.5+(S.rep/100)*1.5);b/=(1+(S.shop-1)*0.3);
+if(G.event){if(G.event.type==="spawn")b/=G.event.mult;if(G.event.type==="spawn"&&G.event.mult<1)b/=G.event.mult}
+if(G.event&&G.event.type==="offline")return 999;return Math.max(.8,b);
+}
+function showBanner(n,d){const b=document.getElementById("event-banner");b.innerHTML=`<b>${n}</b><br><small>${d}</small>`;b.classList.remove("hidden")}
+
+/* ===== ACHIEVEMENTS ===== */
+function checkAch(){let newAch=false;for(const a of ACHS){if(!S.ach[a.id]&&a.c(S)){S.ach[a.id]=true;showAch(a);sndUpgrade();newAch=true}}if(newAch)document.querySelector('[data-tab="ach"]').classList.add("has-new")}
+function showAch(a){const p=document.getElementById("ach-popup");document.getElementById("ap-title").textContent=a.t;document.getElementById("ap-desc").textContent=a.d;p.querySelector(".ap-inner span").textContent=a.i;p.classList.remove("hidden");setTimeout(()=>p.classList.add("hidden"),3500)}
+function achProgress(){let d=0;for(const a of ACHS)if(S.ach[a.id])d++;return{d,t:ACHS.length}}
+
+/* ===== DAY ===== */
+function endDay(){
+const rent=curShop().rent,wages=totalWages(),exp=rent+wages,net=S.dayInc-exp;
+S.sc.days++;if(S.dayInc>S.sc.bestDay)S.sc.bestDay=S.dayInc;
+addToLeaderboard();
+if(S.money<0){showGameOver();return}
+sndDayEnd();G.paused=true;G.dayClosed=true;
+document.getElementById("de-title").textContent=`🌙 Hari ${S.day} Selesai!`;
+document.getElementById("de-body").innerHTML=`<div style="text-align:left;font-size:13px;line-height:1.8">
+💰 Untung: <b style="color:var(--green)">RM${fmt(S.dayInc)}</b><br>
+🏠 Sewa: <b style="color:var(--red)">-RM${rent}</b><br>
+👥 Gaji: <b style="color:var(--red)">-RM${wages}</b><br>
+<b style="border-top:1px solid var(--br);display:block;margin-top:6px;padding-top:6px">Net: <span style="color:${net>=0?"var(--green)":"var(--red)"}">${net>=0?"+":""}RM${fmt(net)}</span></b><br>
+💰 Duit: <b>RM${fmt(S.money)}</b><br>
+⭐ Rep: <b>${S.rep}/100</b></div>
+<div style="margin-top:12px;padding:8px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--dim)">⏸️ Kedai tutup. Boleh upgrade PC, kedai, pekerja. Buka kedai bila dah siap!</div>`;
+document.getElementById("day-end-modal").classList.remove("hidden");
+document.getElementById("de-btn").textContent="🔒 Tutup Kedai";
+document.getElementById("de-btn").onclick=closeShop;
+checkAch();saveGame();
+}
+function closeShop(){
+document.getElementById("day-end-modal").classList.add("hidden");
+const btn=document.getElementById("open-shop-btn");
+if(btn)btn.classList.remove("hidden");
+notif("🔒 Kedai tutup. Buka bila dah siap upgrade.","dim");
+}
+function openShop(){
+const exp=curShop().rent+totalWages();S.money-=exp;S.dayExp=exp;
+if(S.money<0){showGameOver();return}
+S.day++;S.dayInc=0;G.dayTime=0;G.spawnT=0;G.event=null;G.paused=false;G.dayClosed=false;G.lastTick=performance.now();
+document.getElementById("event-banner").classList.add("hidden");
+const btn=document.getElementById("open-shop-btn");
+if(btn)btn.classList.add("hidden");
+S.queue=[];for(const pc of S.pcs){if(pc.st==="waiting"){pc.st="free";pc.cust=null}}
+G.dirtyPCs=true;renderPCs();renderQueue();updateHUD();checkAch();
+notif(`🏪 Kedai buka! Hari ${S.day} bermula!`,"green");
+}
+function showGameOver(){addToLeaderboard();document.getElementById("game-over-modal").classList.remove("hidden");document.getElementById("go-text").textContent=`Bankrap Hari ${S.day}! Duit: RM${fmt(S.money)}. Cuba lagi!`}
+
+/* ===== UI ===== */
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+"M";if(n>=1e3)return(n/1e3).toFixed(1)+"K";return Math.floor(n).toString()}
+function updateHUD(){
+document.getElementById("money").textContent="RM "+fmt(S.money);
+document.getElementById("rep").textContent=S.rep;
+document.getElementById("shop-name").textContent=curShop().name;
+document.getElementById("shop-deco").textContent=curShop().deco;
+document.getElementById("shop-level-badge").textContent="Lv "+S.shop;
+document.getElementById("shop-day").textContent="Hari "+S.day;
+updateShopBanner();
+document.getElementById("day-goal").textContent=fmt(S.dayInc)+"/"+fmt(curShop().rent);
+document.getElementById("combo").textContent="x"+(G.combo>0?G.combo+1:1);
+const prog=(G.dayTime/CFG.DAY_DUR)*100;
+document.getElementById("day-bar-fill").style.width=prog+"%";
+document.getElementById("day-bar-txt").textContent=`Untung: RM${fmt(S.dayInc)} | Sewa: RM${curShop().rent} | Gaji: RM${fmt(totalWages())}`;
+const hp=G.dayTime/CFG.DAY_DUR,ch=Math.floor(CFG.DAY_START_H+hp*(CFG.DAY_END_H-CFG.DAY_START_H)),dh=ch>12?ch-12:ch,ap=ch>=12?"PM":"AM";
+document.getElementById("shop-time").textContent=`${dh||12}:00 ${ap}`;
+}
+function renderPCs(){
+const grid=document.getElementById("pc-area");const shop=curShop();let h="";
+for(let i=0;i<shop.maxPC;i++){
+const pc=S.pcs[i];if(!pc){h+=`<div class="pc-slot empty" onclick="addPC()"><div class="pc-mon">🖥️</div><div class="pc-st free">+Beli RM${CFG.NEW_PC_COST}</div></div>`;continue}
+let sc="",st="Kosong",me="🖥️",tb="",ctBadge="",dialog="";
+if(pc.st==="free"){sc="";st="Kosong";me="🖥️"}
+else if(pc.st==="waiting"){sc="waiting";st="TUNGGU!";me=pc.cust?pc.cust.emoji:"⏳";if(pc.cust&&pc.cust.ctype&&pc.cust.ctype!=="normal")ctBadge=`<div class="pc-cust-type ${pc.cust.ctype}">${pc.cust.ctype.toUpperCase()}</div>`}
+else if(pc.st==="playing"){sc="occupied";st=`${Math.floor(pc.hp)}/${pc.hg}j`;me=pc.cust?pc.cust.emoji:"🎮";tb=`<div class="pc-tb"><div class="pc-tf" style="width:${(pc.hp/pc.hg)*100}%"></div></div>`;if(pc.cust&&pc.cust.playDialog)dialog=`<div class="pc-dialog">💬 ${pc.cust.playDialog}</div>`}
+h+=`<div class="pc-slot ${sc}" onclick="pcClick(${i})">${ctBadge}<div class="pc-num">PC${i+1}</div><div class="pc-lv">Lv${pc.lv}</div><div class="pc-mon">${me}</div><div class="pc-gn">${pcGame(pc)}</div>${dialog}<div class="pc-st ${pc.st}">${st}</div><div class="pc-inc">RM${pcInc(pc).toFixed(2)}/j</div>${tb}</div>`;
+}
+grid.innerHTML=h;
+}
+function pcClick(pid){sndClick();const pc=S.pcs[pid];if(!pc)return;if(pc.st==="waiting")openServe(pid)}
+function renderQueue(){document.getElementById("queue-list").innerHTML=S.queue.map(c=>{const badge=c.ctype&&c.ctype!=="normal"?`<span class="ct-badge ${c.ctype}">${c.ctype}</span>`:"";return `<div class="q-cust">${c.emoji} ${c.name}${badge}</div>`}).join("")}
+function renderAll(){updateHUD();renderPCs();renderQueue();updateShopBanner()}
+
+// Shop banner — shows custom name + selected badges
+function updateShopBanner(){
+const banner=document.getElementById("shop-banner");
+const name=S.shopName||"";
+const badges=S.selectedBadges||[];
+if(!name&&badges.length===0){banner.style.display="none";return}
+banner.style.display="flex";
+let html="";
+if(name)html+=`<span id="shop-banner-name">🏪 ${escapeHtml(name)}</span>`;
+if(badges.length>0){
+html+='<span id="shop-banner-badges">';
+for(const bid of badges){
+const ach=ACHS.find(a=>a.id===bid);
+if(ach&&S.ach[bid])html+=`<span class="shop-badge-selected">${ach.i}</span>`;
+}
+html+="</span>";
+}
+banner.innerHTML=html;
+}
+function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").substring(0,30)}
+
+function setShopName(){
+const input=document.getElementById("shop-name-edit");
+if(!input)return;
+const name=input.value.trim();
+S.shopName=name;
+saveGame();updateShopBanner();
+notif(name?`🏪 Nama kedai: ${name}`:"🏪 Nama kedai dibuang","green");
+}
+
+function toggleBadge(achId){
+if(!S.ach[achId])return;
+let badges=S.selectedBadges||[];
+const idx=badges.indexOf(achId);
+if(idx>=0){badges.splice(idx,1)}
+else{
+if(badges.length>=5){notif("Maksimum 5 badge je!","red");return}
+badges.push(achId);
+}
+S.selectedBadges=badges;saveGame();updateShopBanner();renderAchTab();
+}
+
+// Lightweight update — only progress bars, status text, dialogs (no HTML rebuild)
+function updatePCDynamics(){
+const slots=document.querySelectorAll(".pc-slot");
+for(let i=0;i<S.pcs.length&&i<slots.length;i++){
+const pc=S.pcs[i];const el=slots[i];if(!el)continue;
+if(pc.st==="playing"){
+// Update progress bar
+const bar=el.querySelector(".pc-tf");if(bar)bar.style.width=((pc.hp/pc.hg)*100)+"%";
+// Update status text
+const stEl=el.querySelector(".pc-st");if(stEl)stEl.textContent=`${Math.floor(pc.hp)}/${pc.hg}j`;
+// Update dialog
+const dlgEl=el.querySelector(".pc-dialog");if(dlgEl&&pc.cust&&pc.cust.playDialog)dlgEl.textContent="💬 "+pc.cust.playDialog;
+}
+}
+}
+
+/* Tabs */
+let curTab="pc";
+function switchTab(t){sndClick();curTab=t;
+try{
+document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id==="tab-"+t));
+if(t==="ach")document.querySelector('[data-tab="ach"]').classList.remove("has-new");
+renderTab(t);
+}catch(e){console.error('Tab error:',e)}
+}
+function renderTab(t){
+if(t==="pc")renderPCTab();else if(t==="shop")renderShopTab();else if(t==="worker")renderWorkerTab();else if(t==="games")renderGamesTab();else if(t==="ach")renderAchTab();else if(t==="lb")renderLeaderboard();else if(t==="redeem")renderRedeemTab();else if(t==="stats")renderStatsTab();
+}
+
+/* ===== REDEEM CODES ===== */
+const REDEEM_CODES={
+"DEVELOPER1K":{amount:1000,once:false,desc:"Duit tambah RM 1,000 (guna banyak kali)"},
+"PERMULAAN":{amount:100,once:true,desc:"Duit tambah RM 100 (sekali setiap ID)"},
+};
+function redeemCode(){
+const input=document.getElementById("redeem-input");
+if(!input)return;
+const code=input.value.trim().toUpperCase();
+if(!code){notif("Masukkan kod dulu!","red");return}
+const rc=REDEEM_CODES[code];
+if(!rc){notif("❌ Kod tak sah!","red");return}
+if(rc.once){
+const used=S.redeemedCodes||[];
+if(used.includes(code)){notif("❌ Kod dah digunakan untuk ID ini!","red");return}
+used.push(code);S.redeemedCodes=used;
+}
+S.money+=rc.amount;S.sc.totalEarn+=rc.amount;
+sndMoney();notif(`✅ +RM ${rc.amount}! Kod: ${code}`,"green");
+saveGame();updateHUD();renderRedeemTab();
+}
+function renderRedeemTab(){
+let h="<h3 style='font-size:13px;margin-bottom:8px'>🎟️ Tebus Kod</h3>";
+h+=`<div class="ucard" style="border-color:var(--yellow)"><div class="uc-name">🎟️ Masukkan Kod</div><div class="uc-desc">Tebus kod untuk dapat duit percuma!</div><div style="display:flex;gap:4px;margin-top:6px"><input id="redeem-input" placeholder="Masukkan kod..." style="flex:1;background:var(--bg);border:1px solid var(--yellow);color:var(--yellow);font-size:14px;padding:10px;border-radius:6px;font-family:inherit;text-transform:uppercase" onkeydown="if(event.key==='Enter')redeemCode()"><button class="uc-btn" style="width:auto;padding:10px 16px" onclick="redeemCode()">✅ Tebus</button></div></div>`;
+h+="<div style='margin-top:10px'><div style='font-size:11px;color:var(--dim);margin-bottom:6px'>Kod tersedia:</div>";
+for(const [code,info] of Object.entries(REDEEM_CODES)){
+const used=info.once&&(S.redeemedCodes||[]).includes(code);
+h+=`<div class="ucard ${used?"locked":""}"><div class="uc-h"><div class="uc-name">🎟️ ${code}</div></div><div class="uc-desc">${info.desc}</div>${used?"<div style='font-size:10px;color:var(--green)'>✅ Dah digunakan</div>":""}</div>`;
+}
+h+="</div>";
+document.getElementById("tab-redeem").innerHTML=h;
+}
+function renderPCTab(){
+let h="<h3 style='font-size:13px;margin-bottom:8px'>🖥️ Upgrade PC</h3>";
+for(let i=0;i<S.pcs.length;i++){
+const pc=S.pcs[i],c=pcUpCost(pc),ng=pc.lv<CFG.PC_MAX_LV?GAMES[pc.lv]:"MAX",ca=S.money>=c,mx=pc.lv>=CFG.PC_MAX_LV,aaa=isAAAGame(pc.lv+1)?" ⭐AAA":"";
+h+=`<div class="pcu"><div class="pcu-h"><div><div class="pcu-n">🖥️ PC${i+1}</div><div class="pcu-g">${pcGame(pc)}${isAAAGame(pc.lv)?" �":""}</div></div><div class="pc-lv">Lv${pc.lv}</div></div><div class="pcu-i">RM${pcInc(pc).toFixed(2)}/j → RM${(pcInc(pc)+CFG.PC_INC_PER_LV).toFixed(2)}/j</div><div class="pcu-pb"><div class="pcu-pf" style="width:${pc.lv}%"></div></div>`;
+h+=mx?`<button class="uc-btn" disabled>🏆 MAX!</button>`:`<button class="uc-btn ${ca?"":"cant"}" onclick="upgradePC(${i})" ${pc.st!=="free"?"disabled":""}>⬆️ Lv${pc.lv+1} — RM${fmt(c)}</button><div class="pcu-ng">Next: ${ng}${aaa}</div>`;
+h+=`</div>`;
+}
+if(S.pcs.length<curShop().maxPC){h+=`<div class="ucard" style="text-align:center"><div class="uc-name">➕ Beli PC Baru</div><button class="uc-btn ${S.money>=CFG.NEW_PC_COST?"":"cant"}" onclick="addPC()">RM${fmt(CFG.NEW_PC_COST)}</button></div>`}
+document.getElementById("tab-pc").innerHTML=h;
+}
+function renderShopTab(){
+let h="<h3 style='font-size:13px;margin-bottom:8px'>🏪 Kedai</h3>";
+// Shop name editor at top of shop tab
+h+=`<div class="ucard" style="border-color:var(--cyan)"><div class="uc-name">🏷️ Nama Kedai</div><div class="uc-desc">Tukar nama kedai awak. Tunjuk kat atas kedai!</div><div style="display:flex;gap:4px;margin-top:6px"><input id="shop-name-edit" placeholder="cth: Gamers Paradise..." value="${escapeHtml(S.shopName||"")}" maxlength="30" style="flex:1;background:var(--bg);border:1px solid var(--cyan);color:var(--cyan);font-size:13px;padding:8px;border-radius:6px;font-family:inherit" onkeydown="if(event.key==='Enter')setShopName()"><button class="uc-btn" style="width:auto;padding:8px 16px" onclick="setShopName()">💾</button></div></div>`;
+// Selected badges preview
+const sBadges=S.selectedBadges||[];
+if(sBadges.length>0){
+h+=`<div class="ucard"><div class="uc-name">🎖️ Badge Dipilih (${sBadges.length}/5)</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">`;
+for(const bid of sBadges){const ach=ACHS.find(a=>a.id===bid);if(ach)h+=`<span style="font-size:20px;background:var(--bg4);border:1px solid var(--yellow);border-radius:6px;padding:2px 6px">${ach.i}</span>`}
+h+=`</div><div style="font-size:10px;color:var(--dim);margin-top:4px">Pilih badge di tab 🏆</div></div>`;
+}
+const sh=curShop(),nx=nextShop();
+h+=`<div class="ucard" style="border-color:var(--green)"><div class="uc-h"><div class="uc-name">${sh.deco} ${sh.name}</div><div class="uc-lv">Lv${sh.lv}</div></div><div class="uc-desc">${sh.desc}</div><div class="uc-stats"><div class="uc-stat">PC Max: <b>${sh.maxPC}</b></div><div class="uc-stat">PC: <b>${S.pcs.length}</b></div><div class="uc-stat">Sewa: <b>RM${sh.rent}</b></div></div></div>`;
+if(nx){const ca=S.money>=nx.cost;h+=`<div class="ucard"><div class="uc-h"><div class="uc-name">${nx.deco} ${nx.name}</div><div class="uc-lv">Lv${nx.lv}</div></div><div class="uc-desc">${nx.desc}</div><div class="uc-stats"><div class="uc-stat">PC: <b>${nx.maxPC}</b></div><div class="uc-stat">Sewa: <b>RM${nx.rent}</b></div></div><button class="uc-btn ${ca?"":"cant"}" onclick="upgradeShop()">🔨 RM${fmt(nx.cost)}</button><div class="uc-warn">⚠️ Sewa naik ke RM${nx.rent}/hari!</div></div>`}
+else h+=`<div class="ucard" style="text-align:center"><div class="uc-name">🏆 MAX LEVEL!</div></div>`;
+document.getElementById("tab-shop").innerHTML=h;
+}
+function renderWorkerTab(){
+let h="<h3 style='font-size:13px;margin-bottom:8px'>🤖 Pekerja AI</h3>";
+if(S.workers.length>0){h+="<div style='font-size:11px;margin-bottom:6px'>Pekerja Sekarang:</div>";for(const w of S.workers)h+=`<div class="ucard" style="border-color:var(--green)"><div class="uc-h"><div class="uc-name">${w.emoji} ${w.name}</div><div class="uc-lv">${(w.acc*100).toFixed(0)}%</div></div><div class="uc-stats"><div class="uc-stat">PC: <b>${w.maxPC===999?"Semua":w.maxPC}</b></div><div class="uc-stat">Gaji: <b>RM${w.wage}</b></div></div></div>`}
+h+="<div style='font-size:11px;margin:8px 0'>Sewa Baru:</div>";
+for(const wt of WORKERS){const hired=S.workers.find(w=>w.tid===wt.id),ca=S.money>=wt.cost;
+h+=`<div class="ucard ${hired?"locked":""}"><div class="uc-h"><div class="uc-name">${wt.emoji} ${wt.name}</div>${hired?"<div class='uc-lv' style='color:var(--green)'>✅</div>":""}</div><div class="uc-desc">${wt.desc}</div><div class="uc-stats"><div class="uc-stat">PC: <b>${wt.maxPC===999?"Semua":wt.maxPC}</b></div><div class="uc-stat">Acc: <b>${(wt.acc*100).toFixed(0)}%</b></div><div class="uc-stat">Gaji: <b>RM${wt.wage}</b></div></div>${hired?"":`<button class="uc-btn ${ca?"":"cant"}" onclick="hireWorker(${wt.id})">Sewa RM${fmt(wt.cost)}</button>`}</div>`}
+if(totalWages()>0)h+=`<div style="font-size:11px;color:var(--yellow);margin-top:6px">Total Gaji/Hari: RM${totalWages()}</div>`;
+document.getElementById("tab-worker").innerHTML=h;
+}
+function renderGamesTab(){
+const maxLv=Math.max(...S.pcs.map(p=>p.lv));let h="<h3 style='font-size:13px;margin-bottom:8px'>🎮 Games (100) — ⭐AAA di level tinggi!</h3>";
+for(let i=0;i<GAMES.length;i++){const u=i<maxLv,aaa=isAAAGame(i+1);
+h+=`<div class="gli ${u?"unlocked":"locked"} ${aaa?"aaa":""}"><div class="glb">Lv${i+1}</div><span>${u?"✅":"🔒"} ${GAMES[i]}${aaa?" ⭐":""}</span></div>`}
+document.getElementById("tab-games").innerHTML=h;
+}
+function renderAchTab(){
+const p=achProgress();let h=`<h3 style='font-size:13px;margin-bottom:8px'>🏆 Pencapaian (${p.d}/${p.t})</h3>`;
+// Shop name editor
+h+=`<div class="ucard" style="margin-bottom:8px"><div class="uc-name">🏪 Nama Kedai</div><div class="uc-desc">Letak nama kedai awak sendiri. Akan tunjuk kat atas kedai.</div><div style="display:flex;gap:4px;margin-top:4px"><input id="shop-name-edit" placeholder="Nama kedai..." value="${escapeHtml(S.shopName||"")}" maxlength="30" onkeydown="if(event.key==='Enter')setShopName()"><button class="uc-btn" style="width:auto;padding:4px 12px" onclick="setShopName()">OK</button></div></div>`;
+// Badge selection
+h+=`<div class="ucard" style="margin-bottom:8px"><div class="uc-name">🎖️ Pilih Badge (max 5)</div><div class="uc-desc">Pilih badge yang dah unlock untuk tunjuk di bawah nama kedai.</div>`;
+const unlocked=ACHS.filter(a=>S.ach[a.id]);
+if(unlocked.length===0){h+="<div style='font-size:11px;color:var(--dim)'>Buka achievement dulu untuk pilih badge.</div>"}
+else{
+h+='<div class="badge-select-grid">';
+for(const a of unlocked){
+const sel=(S.selectedBadges||[]).includes(a.id);
+h+=`<div class="badge-sel-item ${sel?"selected":""}" onclick="toggleBadge('${a.id}')"><div class="badge-sel-icon">${a.i}</div><div class="badge-sel-name">${a.t}</div></div>`;
+}
+h+="</div>";
+}
+h+=`</div>`;
+// Achievement list
+for(const a of ACHS){const d=S.ach[a.id];h+=`<div class="achi ${d?"done":"locked"}"><div class="achi-i">${d?a.i:"🔒"}</div><div class="achi-info"><div class="achi-t">${a.t}</div><div class="achi-d">${a.d}</div></div>${d?"<div style='color:var(--green);font-size:16px'>✓</div>":""}</div>`}
+document.getElementById("tab-ach").innerHTML=h;
+}
+function renderStatsTab(){
+const s=S.sc;const rows=[["Hari",S.day],["Total Untung","RM"+fmt(s.totalEarn)],["Customer",s.cust],["Perfect",s.perfect],["Mengamuk",s.angry],["VIP Served",s.vip],["Pro Served",s.pro],["Student Served",s.student],["Upgrade",s.upg],["PC Max Lv",s.maxPC],["Best Day","RM"+fmt(s.bestDay)],["Reputasi",S.rep+"/100"],["Kedai Lv",S.shop],["PCs",S.pcs.length],["Pekerja",S.workers.length],["Game ID",getID()]];
+document.getElementById("tab-stats").innerHTML="<h3 style='font-size:13px;margin-bottom:8px'>📊 Stats</h3>"+rows.map(r=>`<div class="sr"><span>${r[0]}</span><b>${r[1]}</b></div>`).join("");
+}
+
+/* Helpers */
+function notif(txt,color){const d=document.createElement("div");d.className="notif "+(color||"dim");d.textContent=txt;document.body.appendChild(d);setTimeout(()=>d.remove(),2000)}
+function floatMoney(pid,amt,gain){const el=document.querySelectorAll(".pc-slot")[pid];if(!el)return;const d=document.createElement("div");d.className="fm "+(gain?"gain":"loss");d.textContent="+RM"+amt.toFixed(2);d.style.cssText="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)";el.appendChild(d);setTimeout(()=>d.remove(),1200)}
+
+/* ===== INIT ===== */
+window.addEventListener("DOMContentLoaded",()=>{
+updateMenu();
+document.addEventListener("keydown",e=>{if(!G.servePC)return;if(e.key==="ArrowUp"||e.key==="+")adjH(1);else if(e.key==="ArrowDown"||e.key==="-")adjH(-1);else if(e.key==="Enter"){e.preventDefault();confirmServe()}});
+window.addEventListener("beforeunload",()=>{if(S)saveGame()});
+window.addEventListener("click",initAudio,{once:true});
+});
+</script>
+</body>
+</html>
